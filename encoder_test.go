@@ -2,6 +2,7 @@ package schema
 
 import (
 	"fmt"
+	"net/url"
 	"reflect"
 	"testing"
 )
@@ -51,7 +52,7 @@ func TestFilled(t *testing.T) {
 	valExists(t, "f07", "seven", vals)
 	valExists(t, "f08", "8", vals)
 	valExists(t, "f09", "1.618000", vals)
-	valExists(t, "F12", "12", vals)
+	valExists(t, "F11.F12", "12", vals)
 
 	emptyErr := MultiError{}
 	if errs.Error() == emptyErr.Error() {
@@ -287,7 +288,7 @@ func TestEncoderOrder(t *testing.T) {
 	valExists(t, "simple_overridden", "one", v1)
 	valExists(t, "slice", "2", v1)
 	valExists(t, "slice_overridden", "two", v1)
-	valExists(t, "nr", "3", v1)
+	valExists(t, "struct.nr", "3", v1)
 	valExists(t, "struct_overridden", "three", v1)
 }
 
@@ -370,7 +371,7 @@ func TestEncoderWithOmitempty(t *testing.T) {
 	valNotExists(t, "f04", vals)
 	valNotExists(t, "f05", vals)
 	valNotExists(t, "f06", vals)
-	valExists(t, "f0601", "test", vals)
+	valExists(t, "f07.f0601", "test", vals)
 	valNotExists(t, "f08", vals)
 	valsExist(t, "f09", []string{"test"}, vals)
 }
@@ -389,7 +390,7 @@ func TestStructPointer(t *testing.T) {
 
 	encoder := NewEncoder()
 	encoder.Encode(&s, vals)
-	valExists(t, "F12", "2", vals)
+	valExists(t, "F01.F12", "2", vals)
 	valExists(t, "F02", "null", vals)
 	valNotExists(t, "F03", vals)
 }
@@ -415,5 +416,49 @@ func TestRegisterEncoderCustomArrayType(t *testing.T) {
 		})
 
 		encoder.Encode(s, vals)
+	}
+}
+
+//Test that we can encode and decode back into the orignial value without losing information
+func TestEncodeDecode(t *testing.T) {
+
+	type A struct {
+		AInt       int
+		SomeString string
+	}
+	type B struct {
+		BInt int
+		A    A
+	}
+	type C struct {
+		B B
+		A
+		A02 A `schema:"customA"`
+	}
+	originalstruct := C{
+		B: B{
+			BInt: 1337,
+			A: A{
+				AInt:       123,
+				SomeString: "HI",
+			},
+		},
+		A: A{
+			AInt:       1,
+			SomeString: "hello",
+		},
+	}
+
+	encoded := url.Values{}
+	if err := NewEncoder().Encode(originalstruct, encoded); err != nil {
+		t.Fatal(err)
+	}
+	var decoded C
+	if err := NewDecoder().Decode(&decoded, encoded); err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(&originalstruct, &decoded) {
+		t.Fatal("unable to encode and decode to recover the original value")
 	}
 }

@@ -25,8 +25,7 @@ func NewEncoder() *Encoder {
 // Intended for use with url.Values.
 func (e *Encoder) Encode(src interface{}, dst map[string][]string) error {
 	v := reflect.ValueOf(src)
-
-	return e.encode(v, dst)
+	return e.encode("", v, dst)
 }
 
 // RegisterEncoder registers a converter for encoding a custom type.
@@ -68,7 +67,7 @@ func isZero(v reflect.Value) bool {
 	return v.Interface() == z.Interface()
 }
 
-func (e *Encoder) encode(v reflect.Value, dst map[string][]string) error {
+func (e *Encoder) encode(scope string, v reflect.Value, dst map[string][]string) error {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -85,12 +84,14 @@ func (e *Encoder) encode(v reflect.Value, dst map[string][]string) error {
 			continue
 		}
 
+		if scope != "" {
+			name = scope + "." + name
+		}
 		// Encode struct pointer types if the field is a valid pointer and a struct.
 		if isValidStructPointer(v.Field(i)) {
-			e.encode(v.Field(i).Elem(), dst)
+			e.encode(name, v.Field(i).Elem(), dst)
 			continue
 		}
-
 		encFunc := typeEncoder(v.Field(i).Type(), e.regenc)
 
 		// Encode non-slice types and custom implementations immediately.
@@ -99,13 +100,12 @@ func (e *Encoder) encode(v reflect.Value, dst map[string][]string) error {
 			if opts.Contains("omitempty") && isZero(v.Field(i)) {
 				continue
 			}
-
 			dst[name] = append(dst[name], value)
 			continue
 		}
 
 		if v.Field(i).Type().Kind() == reflect.Struct {
-			e.encode(v.Field(i), dst)
+			e.encode(name, v.Field(i), dst)
 			continue
 		}
 
