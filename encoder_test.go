@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"reflect"
 	"testing"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 type E1 struct {
@@ -423,41 +425,45 @@ func TestRegisterEncoderCustomArrayType(t *testing.T) {
 func TestEncodeDecode(t *testing.T) {
 
 	type A struct {
-		AInt       int
+		AInt       *int
 		SomeString string
 	}
 	type B struct {
-		BInt int
-		A    A
+		BInt     int
+		StrSlice []string
+		A        A
 	}
 	type C struct {
 		B B
 		A
 		A02 A `schema:"customA"`
 	}
+	aint := 1337
 	originalstruct := C{
 		B: B{
-			BInt: 1337,
+			BInt: 1,
 			A: A{
-				AInt:       123,
+				AInt:       nil,
 				SomeString: "HI",
 			},
 		},
 		A: A{
-			AInt:       1,
+			AInt:       &aint,
 			SomeString: "hello",
 		},
 	}
 
 	encoded := url.Values{}
 	if err := NewEncoder().Encode(originalstruct, encoded); err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to encode %v", err)
 	}
+	spew.Dump(encoded)
 	var decoded C
 	if err := NewDecoder().Decode(&decoded, encoded); err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to decode %v", err)
 	}
 
+	spew.Dump(decoded)
 	if !reflect.DeepEqual(&originalstruct, &decoded) {
 		t.Fatal("unable to encode and decode to recover the original value")
 	}

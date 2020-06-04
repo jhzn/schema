@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 // NewDecoder returns a new Decoder.
@@ -200,6 +202,10 @@ func (d *Decoder) decode(v reflect.Value, path string, parts []pathPart, values 
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 		if v.IsNil() {
+			//spew.Dump("decode", path)
+			//spew.Dump(reflect.New(t))
+			//spew.Dump(v.Kind())
+			//spew.Dump(v)
 			v.Set(reflect.New(t))
 		}
 		v = v.Elem()
@@ -359,9 +365,19 @@ func (d *Decoder) decode(v reflect.Value, path string, parts []pathPart, values 
 				v.Set(reflect.Zero(t))
 			}
 		} else if conv := builtinConverters[t.Kind()]; conv != nil {
-			if value := conv(val); value.IsValid() {
+			if value := conv(val); value.IsValid() && value.Kind() != reflect.Ptr {
+				//spew.Dump("KIND")
+				//spew.Dump()
+				//spew.Dump(value.Kind())
+				//spew.Dump(reflect.ValueOf(value))
 				v.Set(value.Convert(t))
+			} else if t.Kind() == reflect.Ptr {
+				spew.Dump("its nil")
 			} else {
+				spew.Dump(t.Kind())
+				//spew.Dump(val)
+				//spew.Dump(conv(val))
+				spew.Dump("BANAN")
 				return ConversionError{
 					Key:   path,
 					Type:  t,

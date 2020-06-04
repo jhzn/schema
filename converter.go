@@ -1,5 +1,3 @@
-// Copyright 2012 The Gorilla Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 package schema
@@ -47,7 +45,13 @@ var builtinConverters = map[reflect.Kind]Converter{
 	uint64Type:  convertUint64,
 }
 
+func checknull(value string) bool {
+	return value == "null"
+}
 func convertBool(value string) reflect.Value {
+	if isNil := checknull(value); isNil {
+		return reflect.ValueOf(new(bool))
+	}
 	if value == "on" {
 		return reflect.ValueOf(true)
 	} else if v, err := strconv.ParseBool(value); err == nil {
@@ -57,6 +61,9 @@ func convertBool(value string) reflect.Value {
 }
 
 func convertFloat32(value string) reflect.Value {
+	if isNil := checknull(value); isNil {
+		return reflect.ValueOf(new(float32))
+	}
 	if v, err := strconv.ParseFloat(value, 32); err == nil {
 		return reflect.ValueOf(float32(v))
 	}
@@ -64,13 +71,18 @@ func convertFloat32(value string) reflect.Value {
 }
 
 func convertFloat64(value string) reflect.Value {
+	if isNil := checknull(value); isNil {
+		return reflect.ValueOf(new(float64))
+	}
 	if v, err := strconv.ParseFloat(value, 64); err == nil {
 		return reflect.ValueOf(v)
 	}
 	return invalidValue
 }
-
 func convertInt(value string) reflect.Value {
+	if isNil := checknull(value); isNil {
+		return reflect.ValueOf(new(int))
+	}
 	if v, err := strconv.ParseInt(value, 10, 0); err == nil {
 		return reflect.ValueOf(int(v))
 	}
@@ -78,6 +90,9 @@ func convertInt(value string) reflect.Value {
 }
 
 func convertInt8(value string) reflect.Value {
+	if isNil := checknull(value); isNil {
+		return reflect.ValueOf(new(int8))
+	}
 	if v, err := strconv.ParseInt(value, 10, 8); err == nil {
 		return reflect.ValueOf(int8(v))
 	}
@@ -85,6 +100,9 @@ func convertInt8(value string) reflect.Value {
 }
 
 func convertInt16(value string) reflect.Value {
+	if isNil := checknull(value); isNil {
+		return reflect.ValueOf(new(int16))
+	}
 	if v, err := strconv.ParseInt(value, 10, 16); err == nil {
 		return reflect.ValueOf(int16(v))
 	}
@@ -92,6 +110,9 @@ func convertInt16(value string) reflect.Value {
 }
 
 func convertInt32(value string) reflect.Value {
+	if isNil := checknull(value); isNil {
+		return reflect.ValueOf(new(int32))
+	}
 	if v, err := strconv.ParseInt(value, 10, 32); err == nil {
 		return reflect.ValueOf(int32(v))
 	}
@@ -99,6 +120,9 @@ func convertInt32(value string) reflect.Value {
 }
 
 func convertInt64(value string) reflect.Value {
+	if isNil := checknull(value); isNil {
+		return reflect.ValueOf(new(int64))
+	}
 	if v, err := strconv.ParseInt(value, 10, 64); err == nil {
 		return reflect.ValueOf(v)
 	}
@@ -106,6 +130,9 @@ func convertInt64(value string) reflect.Value {
 }
 
 func convertString(value string) reflect.Value {
+	if isNil := checknull(value); isNil {
+		return reflect.ValueOf(new(string))
+	}
 	return reflect.ValueOf(value)
 }
 
